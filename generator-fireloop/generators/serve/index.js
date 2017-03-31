@@ -9,14 +9,14 @@ var chalk = require('chalk');
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     constructor: function () {
-        generators.Base.apply(this, arguments);
+        generators.apply(this, arguments);
         this.log(yosay('Let\'s serve an application!'));
     },
     prompting: function () {
         var clients = this.config.get('clients') || {};
-        clients.fireloop = { path: './fireloop', type: 'server' };
+        //clients.fireloop = { path: './fireloop', type: 'server' };
         var choices = Object.keys(clients || []);
         /**
          * TODO: Add user interface for those app clients that are mobile,
@@ -27,7 +27,7 @@ module.exports = generators.Base.extend({
                 cmd: path.join(require.resolve('nodemon').replace(/nodemon(\/|\\)lib(\/|\\)nodemon.js/, ''), '.bin/nodemon')
             },
             ng2web: {
-                cmd: path.join(require.resolve('angular-cli').replace(/angular-cli(\/|\\)lib(\/|\\)cli(\/|\\)index.js/, ''), '.bin/ng'),
+                cmd: path.join(require.resolve('@angular/cli').replace(/@angular(\/|\\)cli(\/|\\)lib(\/|\\)cli(\/|\\)index.js/, ''), '.bin/ng'),
                 argv: ['serve']
             }
         };

@@ -8,9 +8,9 @@ var chalk = require('chalk');
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     constructor: function () {
-        generators.Base.apply(this, arguments);
+        generators.apply(this, arguments);
         this.log(yosay('Welcome to FireLoop! \n The MEAN Stack Platform by MEAN Expert'));
     },
     prompting: function () {
@@ -34,8 +34,17 @@ module.exports = generators.Base.extend({
         if (this.config.get('version')) {
             choices.push(keys.GENERATE_CLIENT);
         }
-        if (typeof clients === 'object' && Object.keys(clients).length > 0) {
-            choices.push(keys.GENERATE_SDK);
+        // Filter clients only not server.
+        var _clients = [];
+        if (typeof clients === 'object') {
+            Object.keys(clients).forEach(function (name) {
+                if (clients[name].type.match(/(ng2web|ng2ionic|ng2native|ng2universal)/)) {
+                    _clients.push(name);
+                }
+            });
+            if (_clients.length > 0) {
+                choices.push(keys.GENERATE_SDK);
+            }
         }
         choices.push(keys.FIRELOOP_VERSION);
         return this.prompt([{
@@ -63,12 +72,13 @@ module.exports = generators.Base.extend({
                             name: 'client',
                             message: 'For which application do you want to build an SDK?',
                             default: 0,
-                            choices: Object.keys(clients)
+                            choices: _clients
                         }]).then(function (answers) {
                         this.composeWith('fireloop:sdk', {
                             options: {
                                 clientPath: clients[answers.client].path + "/" + sharedPaths[clients[answers.client].type],
-                                clientType: clients[answers.client].type
+                                clientType: clients[answers.client].type,
+                                showOptions: true
                             }
                         });
                     }.bind(this));

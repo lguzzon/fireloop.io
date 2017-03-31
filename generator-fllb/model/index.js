@@ -27,10 +27,13 @@ module.exports = yeoman.Base.extend({
 
     this.argument('name', {
       desc: g.f('Name of the model to create.'),
-      required: true,
+      required: false,
       type: String,
     });
 
+
+    this.name = this.options.args[0]
+    this.displayName = chalk.yellow(this.name);
     // Prevent "warning: possible EventEmitter memory leak detected"
     // when adding more than 10 properties
     // See https://github.com/strongloop/generator-loopback/issues/99
@@ -63,7 +66,8 @@ module.exports = yeoman.Base.extend({
       return;
     }
   },
- /*
+
+/*
   askForName: function() {
     var prompts = [
       {
@@ -80,6 +84,7 @@ module.exports = yeoman.Base.extend({
     }.bind(this));
   },
 */
+
   askForDataSource: function() {
     if (!this.hasDatasources) {
       this.dataSource = null;

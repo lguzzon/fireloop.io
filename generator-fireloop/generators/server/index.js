@@ -12,34 +12,38 @@ var path = require('path');
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     // The name `constructor` is important here
     constructor: function () {
         // Calling the super constructor is important so our generator is correctly set up
-        generators.Base.apply(this, arguments);
+        generators.apply(this, arguments);
         this.log(chalk.yellow('\nSetting up new FireLoop environment.\n'));
+    },
+    prompting: function () {
+        return this.prompt([{
+                type: 'input',
+                name: 'name',
+                message: 'Your project name',
+                default: this.appname
+            }]).then(function (answers) {
+            this.appname = answers.name && answers.name !== '' ? answers.name : 'fireloop';
+        }.bind(this));
     },
     // Not reinventing the wheel, let LoopBack Generator to build the Base.
     installBase: function () {
-        this.composeWith('fireloop:loopback', {
-            options: { skipNextSteps: true }
-        }, {
-            local: require.resolve('generator-fllb')
-        });
+        this.composeWith(require.resolve('generator-fllb'), { name: this.appname, skipNextSteps: true });
     },
     install: function () {
-        this.npmInstall([
-            '@mean-expert/loopback-sdk-builder',
-            'ts-node',
-            'typescript',
-            '@types/node',
-            '@types/mocha'
-        ], { 'save-dev': true });
         this.npmInstall([
             '@mean-expert/loopback-component-realtime',
             '@mean-expert/loopback-stats-mixin',
             '@mean-expert/model',
             '@mean-expert/boot-script',
+            '@mean-expert/loopback-sdk-builder',
+            'ts-node',
+            'typescript',
+            '@types/node',
+            '@types/mocha',
             'loopback-ds-timestamp-mixin',
             'cookie-parser',
             'chai',
@@ -53,6 +57,7 @@ module.exports = generators.Base.extend({
         rmdir.sync(this.destinationPath('client'));
         rmdir.sync(this.destinationPath('server/boot/root.js'));
         rmdir.sync(this.destinationPath('server/boot/authentication.js'));
+        mkdirp(this.destinationPath('tests'));
         [
             {
                 template: 'templates/fireloop/component-config.json',
@@ -98,6 +103,21 @@ module.exports = generators.Base.extend({
                 template: 'templates/tests/keepme.txt',
                 output: { directory: 'tests', file: '.keepme' },
                 params: {}
+            },
+            {
+                template: 'templates/fireloop/app.json',
+                output: { directory: '../', file: 'app.json' },
+                params: {}
+            },
+            {
+                template: 'templates/fireloop/Procfile',
+                output: { directory: '../', file: 'Procfile' },
+                params: {}
+            },
+            {
+                template: 'templates/fireloop/package.json',
+                output: { directory: '../', file: 'package.json' },
+                params: { appname: this.appname.toLowerCase().replace(/\s/, '-') }
             }
         ].forEach(function (config) {
             console.info('Generating: %s', "" + config.output.file);
@@ -113,18 +133,24 @@ module.exports = generators.Base.extend({
             }
         });
         this.composeWith('fireloop:jsonupdate', {
-            options: {
-                filePath: this.destinationPath('package.json'),
-                replace: {
-                    scripts: {
-                        lint: 'eslint .',
-                        start: 'node server/server.js',
-                        posttest: 'npm run lint && nsp check',
-                        test: 'NODE_ENV=testing npm run start'
-                    }
+            filePath: this.destinationPath('package.json'),
+            replace: {
+                scripts: {
+                    lint: 'eslint .',
+                    start: 'node server/server.js',
+                    posttest: 'npm run lint && nsp check',
+                    test: 'NODE_ENV=testing npm run start'
                 }
             }
         });
+        var apiName = this.destinationPath().split(path.sep).pop();
+        this.config.set('clients', (_a = {},
+            _a[apiName] = {
+                path: "./" + apiName,
+                type: 'server'
+            },
+            _a
+        ));
         if (this.options.skipNextSteps)
             return;
         this.log('\nNext steps:\n');
@@ -134,6 +160,7 @@ module.exports = generators.Base.extend({
         this.log(chalk.green('\t\t$ fireloop\n'));
         this.log('\tServe an application');
         this.log(chalk.green('\t\t$ fireloop serve\n'));
+        var _a;
     },
 });
 function generate(cwd, config) {

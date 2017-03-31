@@ -1,3 +1,41 @@
+2017-03-02, Version 3.0.0
+=========================
+
+ * Bump version to use loopback-swagger@4.0.0 (Raymond Feng)
+
+ * Replicate new issue_template from loopback (Siddhi Pai)
+
+ * Replicate issue_template from loopback repo (Siddhi Pai)
+
+ * Update README.md (Rand McKinney)
+
+
+2017-02-02, Version 2.3.0
+=========================
+
+ * Update default version to 3.x (Joe Sepi)
+
+ * Upgrade eslint-config, fix new violations (Miroslav Bajtoš)
+
+
+2017-01-23, Version 2.2.1
+=========================
+
+ * Print IBM promotion even with --skip-next-steps (Miroslav Bajtoš)
+
+
+2017-01-16, Version 2.2.0
+=========================
+
+ * Add IBM branding to loopback-cli (Miroslav Bajtoš)
+
+ * Upgrade eslint-config to 7.x (Miroslav Bajtoš)
+
+ * Extract strings to translate. (Candy)
+
+ * Update dependencies to the latest version (Miroslav Bajtoš)
+
+
 2016-12-16, Version 2.1.0
 =========================
 

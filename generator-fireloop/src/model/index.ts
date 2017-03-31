@@ -15,23 +15,37 @@ _.mixin(require('underscore.inflections'));
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
 
   // Not reinventing the wheel, let LoopBack Generator to build the Base.
-  initializing: function () {
+  initializing: function() {
+    if (Array.isArray(this.options._argv._) && this.options._argv._.length === 0) {
+      throw new Error('Please define a model name: $ fireloop model [Name]');
+    }
     this.root = this.destinationRoot();
-    this.destinationRoot('fireloop');
-    this.composeWith('fireloop:model', {
-      args: this.options._argv._
-    }, { local: require.resolve('generator-fllb/model') });
+    let clients: any = this.config.get('clients') || {};
+    let serverName: string;
+    Object.keys(clients).forEach((key: any) => {
+       if (clients[key].type === 'server' ) {
+         serverName = key;
+       }
+    });
+    if (!serverName) {
+      throw new Error('No API server was found');
+    } else {
+      this.destinationRoot(serverName);
+      this.composeWith('loopback:model', {
+        args: this.options._argv._
+      }, { local: require.resolve('generator-fllb/model') });
+    }
   },
   // Replace JS Model for TS Model
-  end: function () {
-    let modelName = this.options._argv._.shift();
+  end: function() {
+    let modelName = this.options._argv._[0];
     // Get param cased name
     let casedName = changeCase.paramCase(modelName);
     // Update json file with mixins
-    let fname  = this.destinationPath(`./common/models/${casedName}.json`);
+    let fname = this.destinationPath(`./common/models/${casedName}.json`);
     let config = require(fname);
     config.mixins = {
       TimeStamp: {
@@ -39,14 +53,14 @@ module.exports = generators.Base.extend({
       },
       Stats: [
         {
-            method: 'stats',
-            endpoint: '/stats',
-            description: `Statistical information for ${modelName} registers.`,
-            type: 'model',
-            count: {
-                on: 'createdAt',
-                by: 'index'
-            }
+          method: 'stats',
+          endpoint: '/stats',
+          description: `Statistical information for ${modelName} registers.`,
+          type: 'model',
+          count: {
+            on: 'createdAt',
+            by: 'index'
+          }
         }
       ]
     }
@@ -84,7 +98,7 @@ module.exports = generators.Base.extend({
           )
         )
       }
-    );
+      );
   }
 });
 
@@ -95,17 +109,17 @@ function propertyBuilder(config: any) {
     switch (property.type) {
       case 'string':
         properties.push(`\n            ${propName}: 'test'`);
-      break;
+        break;
       case 'number':
         properties.push(`\n            ${propName}: 12345`);
-      break;
+        break;
       case 'date':
-        properties.push(`\n            ${propName}: '${ new Date() }'`);
-      break;
+        properties.push(`\n            ${propName}: '${new Date()}'`);
+        break;
       case 'geopoint':
         properties.push(`\n            ${propName}: { lat: 100.100, lng: 100.100 }`);
-      break;
+        break;
     }
   });
-  return `${ properties.join(`,`) }${ properties.length > 0 ? '\n        ': '' }`;
+  return `${properties.join(`,`)}${properties.length > 0 ? '\n        ' : ''}`;
 }

@@ -17,7 +17,7 @@ const env    = yeoman.createEnv();
  * CLI Options Description
  */
 var argv = yargs
-  .usage('\n********************* FireLoop CLI Tool ************************\n' +
+  .usage('\n********************* FireLoop CLI Tool 2 ************************\n' +
   '\nGenerate FireLoop Projects, Angular 2 Clients and SDK.' +
   '\nUsage:' +
   '\n $ fireloop [command [options]]')

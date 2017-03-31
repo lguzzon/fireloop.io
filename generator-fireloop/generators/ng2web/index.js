@@ -11,7 +11,7 @@ var ejs = require('ejs');
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     prompting: function () {
         this.options.clients = this.config.get('clients') || {};
         var done = this.async();
@@ -20,12 +20,7 @@ module.exports = generators.Base.extend({
                 name: 'name',
                 message: 'What\'s the name of your application?',
                 default: 'webapp'
-            } /*, {
-              type    : 'confirm',
-              name    : 'universal',
-              message : 'Would you like to enable Angular Universal?'
-            }*/
-        ]).then(function (answers) {
+            }]).then(function (answers) {
             var _this = this;
             if (this.options.clients[answers.name]) {
                 this.log(chalk.red("\n\nThere is already an application using the name " + answers.name));
@@ -33,7 +28,7 @@ module.exports = generators.Base.extend({
             }
             else {
                 this.log(chalk.green("\n\nCreating new Angular 2 Application: " + answers.name));
-                var nmdir = require.resolve('angular-cli').replace(/angular-cli(\/|\\)lib(\/|\\)cli(\/|\\)index.js/, '');
+                var nmdir = require.resolve('@angular/cli').replace(/@angular(\/|\\)cli(\/|\\)lib(\/|\\)cli(\/|\\)index.js/, '');
                 var clicmd = path.join(nmdir, '.bin/ng');
                 var args = ['new', answers.name];
                 if (answers.universal) {

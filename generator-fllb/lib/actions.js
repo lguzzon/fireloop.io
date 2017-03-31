@@ -8,7 +8,6 @@
 var path = require('path');
 var g = require('strong-globalize')();
 var fs = require('fs');
-var path = require('path');
 var workspace = require('loopback-workspace');
 var Workspace = workspace.models.Workspace;
 
@@ -29,7 +28,6 @@ actions.configureDestinationDir = function() {
     return;
   }
 
-  /*
   if (this.appname === path.basename(this.destinationRoot())) {
     // When the project name is the same as the current directory,
     // we are assuming the user has already created the project dir
@@ -40,11 +38,11 @@ actions.configureDestinationDir = function() {
   return this.prompt([
     {
       name: 'dir',
-      message: g.f('Enter name of the directory to contain the project:'),
-      default: this.appname,
+      message: g.f('Enter name of the directory to contain the API Server:'),
+      default: 'fireloop'
     },
-  ]).then(function(answers) {*/
-    var dir = this.appname;
+  ]).then(function(answers) {
+    var dir = answers.dir;
     self.dir = dir;
     if (!dir || dir === '.') return done();
 
@@ -56,8 +54,8 @@ actions.configureDestinationDir = function() {
     this.destinationRoot(root);
     this.log.info(g.f('change the working directory to %s', dir));
     this.log();
-  /*  done();
-  }.bind(this));*/
+    done();
+  }.bind(this));
 };
 
 /**

@@ -3,37 +3,38 @@ declare var require: any;
 var yosay = require('yosay');
 var generators = require('yeoman-generator');
 import * as chalk from 'chalk';
+interface Client { path: string, type: string }
 /**
  * @module FireLoopGenerator [FireLoop]
  * @author Jonathan Casarrubias <t: johncasarrubias, gh:mean-expert-official>
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
 
 
-  constructor: function () {
-    generators.Base.apply(this, arguments);
+  constructor: function() {
+    generators.apply(this, arguments);
     this.log(yosay('Welcome to FireLoop! \n The MEAN Stack Platform by MEAN Expert'));
   },
 
-  prompting: function () {
+  prompting: function() {
 
     let keys: any = {
-      GENERATE_PROJECT : 'Generate FireLoop Project',
-      GENERATE_CLIENT  : 'Generate Angular2 Client',
-      GENERATE_SDK     : 'Generate Angular2 SDK',
-      FIRELOOP_VERSION : 'Show FireLoop Version'
+      GENERATE_PROJECT: 'Generate FireLoop Project',
+      GENERATE_CLIENT: 'Generate Angular2 Client',
+      GENERATE_SDK: 'Generate Angular2 SDK',
+      FIRELOOP_VERSION: 'Show FireLoop Version'
     };
 
     let sharedPaths: any = {
-      ng2web       : 'src/app/shared/sdk',
-      ng2universal : 'src/app/shared/sdk',
-      ng2native    : 'app/shared/sdk',
-      ng2ionic     : 'src/app/shared/sdk'
+      ng2web: 'src/app/shared/sdk',
+      ng2universal: 'src/app/shared/sdk',
+      ng2native: 'app/shared/sdk',
+      ng2ionic: 'src/app/shared/sdk'
     };
 
-    let clients: { path: string, type: string }[] = <{ path: string, type: string }[]>this.config.get('clients');
+    let clients: any =  this.config.get('clients');
     let choices: string[] = new Array<string>();
 
     if (!this.config.get('version')) {
@@ -44,19 +45,28 @@ module.exports = generators.Base.extend({
       choices.push(keys.GENERATE_CLIENT);
     }
 
-    if (typeof clients === 'object' && Object.keys(clients).length > 0) {
-      choices.push(keys.GENERATE_SDK);
+    // Filter clients only not server.
+    let _clients: string[] = []; 
+    if (typeof clients === 'object') {
+      Object.keys(clients).forEach((name: string) => {
+        if (clients[name].type.match(/(ng2web|ng2ionic|ng2native|ng2universal)/)) {
+          _clients.push(name);
+        }
+      });
+      if (_clients.length > 0) {
+        choices.push(keys.GENERATE_SDK);
+      }
     }
 
     choices.push(keys.FIRELOOP_VERSION);
 
     return this.prompt([{
-      type    : 'list',
-      name    : 'list',
-      message : 'What do you want to do?',
-      default : 0,
-      choices : choices
-    }]).then(function (answers: { list: any }) {
+      type: 'list',
+      name: 'list',
+      message: 'What do you want to do?',
+      default: 0,
+      choices: choices
+    }]).then(function(answers: { list: any }) {
       let done = this.async();
       let answer = answers.list;
       switch (answer) {
@@ -71,16 +81,17 @@ module.exports = generators.Base.extend({
           break;
         case keys.GENERATE_SDK:
           this.prompt([{
-            type    : 'list',
-            name    : 'client',
-            message : 'For which application do you want to build an SDK?',
-            default : 0,
-            choices : Object.keys(clients)
-          }]).then(function (answers: { client: any }) {
+            type: 'list',
+            name: 'client',
+            message: 'For which application do you want to build an SDK?',
+            default: 0,
+            choices: _clients
+          }]).then(function(answers: { client: any }) {
             this.composeWith('fireloop:sdk', {
               options: {
-                clientPath : `${clients[answers.client].path}/${sharedPaths[clients[answers.client].type]}`,
-                clientType : clients[answers.client].type
+                clientPath: `${clients[answers.client].path}/${sharedPaths[clients[answers.client].type]}`,
+                clientType: clients[answers.client].type,
+                showOptions: true
               }
             });
           }.bind(this));

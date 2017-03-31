@@ -12,19 +12,34 @@ _.mixin(require('underscore.inflections'));
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     // Not reinventing the wheel, let LoopBack Generator to build the Base.
     initializing: function () {
+        if (Array.isArray(this.options._argv._) && this.options._argv._.length === 0) {
+            throw new Error('Please define a model name: $ fireloop model [Name]');
+        }
         this.root = this.destinationRoot();
-        this.destinationRoot('fireloop');
-        this.composeWith('fireloop:model', {
-            args: this.options._argv._
-        }, { local: require.resolve('generator-fllb/model') });
+        var clients = this.config.get('clients') || {};
+        var serverName;
+        Object.keys(clients).forEach(function (key) {
+            if (clients[key].type === 'server') {
+                serverName = key;
+            }
+        });
+        if (!serverName) {
+            throw new Error('No API server was found');
+        }
+        else {
+            this.destinationRoot(serverName);
+            this.composeWith('loopback:model', {
+                args: this.options._argv._
+            }, { local: require.resolve('generator-fllb/model') });
+        }
     },
     // Replace JS Model for TS Model
     end: function () {
         var _this = this;
-        var modelName = this.options._argv._.shift();
+        var modelName = this.options._argv._[0];
         // Get param cased name
         var casedName = changeCase.paramCase(modelName);
         // Update json file with mixins

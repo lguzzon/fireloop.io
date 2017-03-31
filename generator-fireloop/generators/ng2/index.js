@@ -11,7 +11,7 @@ var async = require('async');
  * @description
  * This module generates and configure a FireLoop Server
  */
-module.exports = generators.Base.extend({
+module.exports = generators.extend({
     prompting: function () {
         var _this = this;
         var keys = {

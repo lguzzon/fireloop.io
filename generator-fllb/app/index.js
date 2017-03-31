@@ -3,9 +3,6 @@
 // This file is licensed under the MIT License.
 // License text available at https://opensource.org/licenses/MIT
 
-// Ported to basic functionality by MEAN Expert Team to work on 
-// FireLoop environment. 
-
 'use strict';
 
 var path = require('path');
@@ -28,6 +25,12 @@ module.exports = yeoman.Base.extend({
   constructor: function() {
     yeoman.Base.apply(this, arguments);
 
+    this.argument('name', {
+      desc: g.f('Name of the application to scaffold.'),
+      required: false,
+      type: String,
+    });
+
     this.option('skip-install', {
       desc: g.f('Do not install npm dependencies.'),
       type: Boolean,
@@ -43,6 +46,30 @@ module.exports = yeoman.Base.extend({
         'by default)'),
       type: Boolean,
     });
+  },
+
+  /*
+  greet: function() {
+    this.log(yosay(g.f('Let\'s create a {{LoopBack}} application!')));
+  },
+  */
+
+  help: function() {
+    var msgs = [helpText.customHelp(this, 'loopback_app_usage.txt')];
+
+    var list = Object.keys(this.options.env.getGeneratorsMeta())
+      .filter(function(name) {
+        return name.indexOf('loopback:') !== -1;
+      });
+    if (helpers.getCommandName() === 'loopback-cli') {
+      list = list.map(name => name.replace(/^loopback:/, 'lb '));
+      msgs.push(g.f('\nAvailable commands:\n\n'));
+    } else {
+      msgs.push(g.f('\nAvailable generators:\n\n'));
+    }
+
+    msgs.push(list.map(it => '  ' + it).join('\n'));
+    return msgs.join('') + '\n';
   },
 
   injectWorkspaceCopyRecursive: function() {
@@ -90,14 +117,68 @@ module.exports = yeoman.Base.extend({
     }.bind(this));
   },
 
+
   askForProjectName: function() {
-    this.appname = 'fireloop';
+    /*
+    if (this.options.nested && this.name) {
+      this.appname = this.name;
+      return;
+    }
+
+    // https://github.com/strongloop/generator-loopback/issues/38
+    // yeoman-generator normalize the appname with ' '
+    this.appname =
+      path.basename(process.cwd()).replace(/[\/@\s\+%:\.]+?/g, '-');
+
+    var name = this.name || this.dir || this.appname;
+
+    var prompts = [
+      {
+        name: 'appname',
+        message: g.f('What\'s the name of your application?'),
+        default: name,
+        validate: validateAppName,
+      },
+    ];
+
+    return this.prompt(prompts).then(function(props) {
+      this.appname = props.appname || this.appname;
+    }.bind(this));
+    */
+    this.appname = this.name
   },
 
   configureDestinationDir: actions.configureDestinationDir,
 
+  fetchLoopBackVersions: function() {
+    var done = this.async();
+    var self = this;
+    Workspace.getAvailableLBVersions(function(err, versionsMap) {
+      if (err) return done(err);
+      var versionNames = Object.keys(versionsMap);
+      self.availableLBVersions = versionNames.map(function(version) {
+        return {
+          name: version + ' (' + versionsMap[version].description + ')',
+          value: version,
+        };
+      });
+      done();
+    });
+  },
+
   askForLBVersion: function() {
-    this.options.loopbackVersion = '2.x';
+    var prompts = [{
+      name: 'loopbackVersion',
+      message: g.f('Which version of {{LoopBack}} would you like to use?'),
+      type: 'list',
+      default: '3.x',
+      choices: this.availableLBVersions,
+    }];
+
+    var self = this;
+    return this.prompt(prompts).then(function(answers) {
+      self.options.loopbackVersion = answers.loopbackVersion;
+    }.bind(this));
   },
 
   applyFilterOnTemplate: function() {
@@ -110,7 +191,19 @@ module.exports = yeoman.Base.extend({
   },
 
   askForTemplate: function() {
-    this.wsTemplate = this.defaultTemplate;
+    var prompts = [{
+      name: 'wsTemplate',
+      message: g.f('What kind of application do you have in mind?'),
+      type: 'list',
+      default: this.defaultTemplate,
+      choices: this.templates,
+    }];
+
+    var self = this;
+    return this.prompt(prompts).then(function(answers) {
+      // Do NOT use name template as it's a method in the base class
+      self.wsTemplate = answers.wsTemplate;
+    }.bind(this));
   },
 
   initWorkspace: actions.initWorkspace,
@@ -151,38 +244,56 @@ module.exports = yeoman.Base.extend({
 
   installing: actions.installDeps,
 
-  end: function() {
-    if (this.options.skipNextSteps) return;
+  end: {
+    printNextSteps: function() {
+      if (this.options.skipNextSteps) return;
 
-    var cmd = helpers.getCommandName();
-    if (!this._skipInstall) {
-      this.log();
-      this.log();
-    }
+      var cmd = helpers.getCommandName();
+      if (!this._skipInstall) {
+        this.log();
+        this.log();
+      }
 
-    this.log(g.f('Next steps:'));
-    this.log();
-    if (this.dir && this.dir !== '.') {
-      this.log(g.f('  Change directory to your app'));
-      this.log(chalk.green('    $ cd ' + this.dir));
+      this.log(g.f('Next steps:'));
       this.log();
-    }
-    if (cmd === 'apic') {
-      this.log(g.f('  Run {{API Designer}} to create, test, and publish your' +
-        ' application'));
-      this.log(chalk.green('    $ apic edit'));
+      if (this.dir && this.dir !== '.') {
+        this.log(g.f('  Change directory to your app'));
+        this.log(chalk.green('    $ cd ' + this.dir));
+        this.log();
+      }
+      if (cmd === 'apic') {
+        this.log(g.f('  Run {{API Designer}} to create, test, ' +
+          ' and publish your application'));
+        this.log(chalk.green('    $ apic edit'));
+        this.log();
+      } else {
+        this.log(g.f('  Create a model in your app'));
+        if (cmd === 'loopback-cli')
+          this.log(chalk.green('    $ lb model'));
+        else
+          this.log(chalk.green('    $ ' + cmd + ' loopback:model'));
+        this.log();
+        this.log(g.f('  Run the app'));
+        this.log(chalk.green('    $ node .'));
+        this.log();
+      }
+    },
+
+    promotion: function() {
+      var cmd = helpers.getCommandName();
+      if (cmd !== 'loopback-cli') return;
+      if (this.options.skipNextSteps) {
+        this.log();
+      }
+
+      this.log(chalk.blue(g.f(
+        'The API Connect team at IBM happily continues to develop,\n' +
+          'support and maintain LoopBack, which is at the core of\n' +
+          'API Connect. When your APIs need robust management and\n' +
+          'security options, please check out %s',
+        'http://ibm.biz/tryAPIC')));
       this.log();
-    } else {
-      this.log(g.f('  Create a model in your app'));
-      if (cmd === 'loopback-cli')
-        this.log(chalk.green('    $ lb model'));
-      else
-        this.log(chalk.green('    $ ' + cmd + ' loopback:model'));
-      this.log();
-      this.log(g.f('  Run the app'));
-      this.log(chalk.green('    $ node .'));
-      this.log();
-    }
+    },
   },
 });
 
